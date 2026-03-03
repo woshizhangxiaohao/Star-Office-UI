@@ -1,12 +1,14 @@
 # Star Office UI — License & Usage Notice
 
+This project is a co-created work by **Ring Hyacinth** and **Simon Lee**.
+
 ## 1. Code / Logic License (MIT)
 
 The code/logic in this repository (the "Software") is licensed under the MIT License:
 
 MIT License
 
-Copyright (c) 2026 Ring Hyacinth
+Copyright (c) 2026 Ring Hyacinth & Simon Lee
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +35,8 @@ SOFTWARE.
 ### Important: Art Assets are NOT for commercial use
 
 All art assets (including but not limited to character sprites, scene backgrounds,
-posters, furniture, plants, coffee machine, server room, animations, and full asset packs)
-are **non-commercial only**.
+posters, furniture, plants, coffee machine, server room, animations, button skins,
+and rebuilt full asset packs/indexes) are **non-commercial only**.
 
 They are for **learning, demonstration, and idea sharing only**.
 
