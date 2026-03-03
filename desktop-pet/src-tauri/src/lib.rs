@@ -3,6 +3,7 @@ use base64::Engine;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
+use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, Stdio};
 use std::sync::Mutex;
@@ -208,10 +209,43 @@ fn read_state_file(state_path: &PathBuf) -> Result<PetState, String> {
     serde_json::from_str(&raw).map_err(|e| format!("parse: {e}"))
 }
 
+fn read_state_via_backend() -> Result<PetState, String> {
+    let mut stream = std::net::TcpStream::connect("127.0.0.1:18791")
+        .map_err(|e| format!("backend connect: {e}"))?;
+    let _ = stream.set_read_timeout(Some(Duration::from_millis(1200)));
+    let _ = stream.set_write_timeout(Some(Duration::from_millis(1200)));
+
+    let request = b"GET /status HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n\r\n";
+    stream
+        .write_all(request)
+        .map_err(|e| format!("backend write: {e}"))?;
+
+    let mut raw = String::new();
+    stream
+        .read_to_string(&mut raw)
+        .map_err(|e| format!("backend read: {e}"))?;
+
+    let body = raw
+        .split_once("\r\n\r\n")
+        .map(|(_, b)| b)
+        .ok_or_else(|| "backend response parse failed".to_string())?;
+    serde_json::from_str(body).map_err(|e| format!("backend json parse: {e}"))
+}
+
+fn read_state_with_fallback(state_path: &PathBuf) -> Result<PetState, String> {
+    match read_state_file(state_path) {
+        Ok(state) => Ok(state),
+        Err(file_err) => {
+            eprintln!("⚠️ read state file failed, fallback to backend: {file_err}");
+            read_state_via_backend()
+        }
+    }
+}
+
 #[tauri::command]
 fn read_state(paths: tauri::State<'_, Mutex<AppPaths>>) -> Result<PetState, String> {
     let p = paths.lock().map_err(|e| e.to_string())?;
-    read_state_file(&p.state_path)
+    read_state_with_fallback(&p.state_path)
 }
 
 #[tauri::command]
@@ -389,6 +423,20 @@ fn find_project_root() -> PathBuf {
             break;
         }
     }
+    if let Ok(home) = std::env::var("HOME") {
+        let home = PathBuf::from(home);
+        let candidates = [
+            home.join("Documents").join("GitHub").join("Star-Office-UI"),
+            home.join("GitHub").join("Star-Office-UI"),
+            home.join("Documents").join("Star-Office-UI"),
+            home.join("Star-Office-UI"),
+        ];
+        for candidate in candidates {
+            if candidate.join("backend").join("app.py").exists() {
+                return candidate;
+            }
+        }
+    }
     std::env::current_dir().unwrap_or_default()
 }
 
@@ -477,7 +525,7 @@ fn enter_minimize_mode(
         let p = paths.lock().map_err(|e| e.to_string())?;
         p.state_path.clone()
     };
-    if let Ok(snapshot) = read_state_file(&state_path) {
+    if let Ok(snapshot) = read_state_with_fallback(&state_path) {
         // Sync mini immediately before showing it, avoiding stale one-shot transition.
         let _ = mini.emit("mini-sync-state", snapshot);
     }

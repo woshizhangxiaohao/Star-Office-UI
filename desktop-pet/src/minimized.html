@@ -154,7 +154,15 @@
           const data = await core.invoke('read_state');
           applyState(data);
         } catch (_) {
-          status.textContent = '连接中...';
+          // Fallback for packaged app: read from backend HTTP when invoke path is unavailable.
+          try {
+            const resp = await fetch('http://127.0.0.1:18791/status', { cache: 'no-store' });
+            if (!resp.ok) throw new Error('bad status');
+            const data = await resp.json();
+            applyState(data);
+          } catch (_) {
+            status.textContent = '连接中...';
+          }
         }
       }
 
