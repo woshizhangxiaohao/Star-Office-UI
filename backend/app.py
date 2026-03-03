@@ -1472,6 +1472,38 @@ def assets_home_favorites_save_current():
         return jsonify({"ok": False, "msg": str(e)}), 500
 
 
+@app.route("/assets/home-favorites/delete", methods=["POST"])
+def assets_home_favorites_delete():
+    guard = _require_asset_editor_auth()
+    if guard:
+        return guard
+    try:
+        data = request.get_json(silent=True) or {}
+        item_id = (data.get("id") or "").strip()
+        if not item_id:
+            return jsonify({"ok": False, "msg": "缺少 id"}), 400
+
+        idx = _load_home_favorites_index()
+        items = idx.get("items") or []
+        hit = next((x for x in items if (x.get("id") or "") == item_id), None)
+        if not hit:
+            return jsonify({"ok": False, "msg": "收藏项不存在"}), 404
+
+        rel = hit.get("path") or ""
+        abs_path = os.path.join(ROOT_DIR, rel)
+        if os.path.exists(abs_path):
+            try:
+                os.remove(abs_path)
+            except Exception:
+                pass
+
+        idx["items"] = [x for x in items if (x.get("id") or "") != item_id]
+        _save_home_favorites_index(idx)
+        return jsonify({"ok": True, "id": item_id, "msg": "已删除收藏"})
+    except Exception as e:
+        return jsonify({"ok": False, "msg": str(e)}), 500
+
+
 @app.route("/assets/home-favorites/apply", methods=["POST"])
 def assets_home_favorites_apply():
     guard = _require_asset_editor_auth()
