@@ -834,7 +834,15 @@ def state_to_area(state):
 if not os.path.exists(AGENTS_STATE_FILE):
     save_agents_state(DEFAULT_AGENTS)
 if not os.path.exists(JOIN_KEYS_FILE):
-    save_join_keys({"keys": []})
+    if os.path.exists(os.path.join(ROOT_DIR, "join-keys.sample.json")):
+        try:
+            with open(os.path.join(ROOT_DIR, "join-keys.sample.json"), "r", encoding="utf-8") as sf:
+                sample = json.load(sf)
+            save_join_keys(sample if isinstance(sample, dict) else {"keys": []})
+        except Exception:
+            save_join_keys({"keys": []})
+    else:
+        save_join_keys({"keys": []})
 
 # Tighten runtime-config file perms if exists
 if os.path.exists(RUNTIME_CONFIG_FILE):
@@ -1983,6 +1991,20 @@ if __name__ == "__main__":
     print("=" * 50)
     print(f"State file: {STATE_FILE}")
     print("Listening on: http://0.0.0.0:18791")
+    mode = "production" if _is_production_mode() else "development"
+    print(f"Mode: {mode}")
+    if _is_production_mode():
+        print("Security hardening: ENABLED (strict checks)")
+    else:
+        weak_flags = []
+        if not _is_strong_secret(str(app.secret_key)):
+            weak_flags.append("weak FLASK_SECRET_KEY/STAR_OFFICE_SECRET")
+        if not _is_strong_drawer_pass(ASSET_DRAWER_PASS_DEFAULT):
+            weak_flags.append("weak ASSET_DRAWER_PASS")
+        if weak_flags:
+            print("Security hardening: WARNING (dev mode) -> " + ", ".join(weak_flags))
+        else:
+            print("Security hardening: OK")
     print("=" * 50)
-    
+
     app.run(host="0.0.0.0", port=18791, debug=False)

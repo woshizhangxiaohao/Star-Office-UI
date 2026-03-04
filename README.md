@@ -29,7 +29,11 @@ python3 -m pip install -r backend/requirements.txt
 # 3) 准备状态文件（首次）
 cp state.sample.json state.json
 
-# 4) 启动后端
+# 4) （推荐）准备本地环境变量
+cp .env.example .env
+# 然后编辑 .env：至少设置 FLASK_SECRET_KEY 与 ASSET_DRAWER_PASS
+
+# 5) 启动后端
 cd backend
 python3 app.py
 ```
@@ -123,7 +127,14 @@ python3 -m pip install -r backend/requirements.txt
 cp state.sample.json state.json
 ```
 
-### 3) 启动后端
+### 3) （推荐）准备本地环境变量
+
+```bash
+cp .env.example .env
+# 编辑 .env：至少设置 FLASK_SECRET_KEY 与 ASSET_DRAWER_PASS
+```
+
+### 4) 启动后端
 
 ```bash
 cd backend
@@ -140,6 +151,19 @@ python3 set_state.py syncing "同步进度中"
 python3 set_state.py error "发现问题，排查中"
 python3 set_state.py idle "待命中"
 ```
+
+---
+
+## 3.1、安全自检（推荐上线前执行）
+
+```bash
+python3 scripts/security_check.py
+```
+
+- 返回 `Result: OK` 才建议进入公网部署。
+- 在生产模式（`STAR_OFFICE_ENV=production`）下，请务必配置强密码：
+  - `FLASK_SECRET_KEY`（>=24 位随机字符串）
+  - `ASSET_DRAWER_PASS`（不要使用 `1234`）
 
 ---
 
@@ -224,10 +248,13 @@ star-office-ui/
     ...assets
   docs/
     screenshots/
+  scripts/
+    security_check.py
   office-agent-push.py
   set_state.py
   state.sample.json
-  join-keys.json
+  join-keys.sample.json
+  .env.example
   SKILL.md
   README.md
   LICENSE
@@ -270,7 +297,11 @@ python3 -m pip install -r backend/requirements.txt
 # 3) Initialize state file (first run)
 cp state.sample.json state.json
 
-# 4) Start backend
+# 4) (Recommended) prepare local env file
+cp .env.example .env
+# Then edit .env: set at least FLASK_SECRET_KEY and ASSET_DRAWER_PASS
+
+# 5) Start backend
 cd backend
 python3 app.py
 ```
@@ -342,7 +373,14 @@ python3 -m pip install -r backend/requirements.txt
 cp state.sample.json state.json
 ```
 
-### 3) Start backend
+### 3) (Recommended) prepare local env file
+
+```bash
+cp .env.example .env
+# Then edit .env: set at least FLASK_SECRET_KEY and ASSET_DRAWER_PASS
+```
+
+### 4) Start backend
 
 ```bash
 cd backend
@@ -359,6 +397,19 @@ python3 set_state.py syncing "Syncing progress"
 python3 set_state.py error "Found an issue, debugging"
 python3 set_state.py idle "Standing by"
 ```
+
+---
+
+## III.1 Security preflight (recommended before public deployment)
+
+```bash
+python3 scripts/security_check.py
+```
+
+- Only deploy publicly when it returns `Result: OK`.
+- In production mode (`STAR_OFFICE_ENV=production`), set strong values for:
+  - `FLASK_SECRET_KEY` (>=24 random chars)
+  - `ASSET_DRAWER_PASS` (do not use `1234`)
 
 ---
 
@@ -450,10 +501,13 @@ star-office-ui/
     ...assets
   docs/
     screenshots/
+  scripts/
+    security_check.py
   office-agent-push.py
   set_state.py
   state.sample.json
-  join-keys.json
+  join-keys.sample.json
+  .env.example
   SKILL.md
   README.md
   LICENSE
