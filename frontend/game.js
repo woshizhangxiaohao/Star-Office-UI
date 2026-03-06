@@ -225,21 +225,34 @@ const AREA_POSITIONS = {
   breakroom: [
     { x: 620, y: 180 },
     { x: 560, y: 220 },
-    { x: 680, y: 210 }
+    { x: 680, y: 210 },
+    { x: 540, y: 170 },
+    { x: 700, y: 240 },
+    { x: 600, y: 250 },
+    { x: 650, y: 160 },
+    { x: 580, y: 200 }
   ],
   writing: [
     { x: 760, y: 320 },
     { x: 830, y: 280 },
-    { x: 690, y: 350 }
+    { x: 690, y: 350 },
+    { x: 770, y: 260 },
+    { x: 850, y: 340 },
+    { x: 720, y: 300 },
+    { x: 800, y: 370 },
+    { x: 750, y: 240 }
   ],
   error: [
     { x: 180, y: 260 },
     { x: 120, y: 220 },
-    { x: 240, y: 230 }
+    { x: 240, y: 230 },
+    { x: 160, y: 200 },
+    { x: 220, y: 270 },
+    { x: 140, y: 250 },
+    { x: 200, y: 210 },
+    { x: 260, y: 260 }
   ]
 };
-
-let areaPositionCounters = { breakroom: 0, writing: 0, error: 0 };
 
 
 // 状态控制栏函数（用于测试）
@@ -904,9 +917,12 @@ function fetchAgents() {
     .then(data => {
       if (!Array.isArray(data)) return;
       // 重置位置计数器
-      areaPositionCounters = { breakroom: 0, writing: 0, error: 0 };
-      // 处理每个 agent
+      // 按区域分配不同位置索引，避免重叠
+      const areaSlots = { breakroom: 0, writing: 0, error: 0 };
       for (let agent of data) {
+        const area = agent.area || 'breakroom';
+        agent._slotIndex = areaSlots[area] || 0;
+        areaSlots[area] = (areaSlots[area] || 0) + 1;
         renderAgent(agent);
       }
       // 移除不再存在的 agent
@@ -925,10 +941,9 @@ function fetchAgents() {
     });
 }
 
-function getAreaPosition(area) {
+function getAreaPosition(area, slotIndex) {
   const positions = AREA_POSITIONS[area] || AREA_POSITIONS.breakroom;
-  const idx = areaPositionCounters[area] || 0;
-  areaPositionCounters[area] = (idx + 1) % positions.length;
+  const idx = (slotIndex || 0) % positions.length;
   return positions[idx];
 }
 
@@ -940,7 +955,7 @@ function renderAgent(agent) {
   const isMain = !!agent.isMain;
 
   // 获取这个 agent 在区域里的位置
-  const pos = getAreaPosition(area);
+  const pos = getAreaPosition(area, agent._slotIndex || 0);
   const baseX = pos.x;
   const baseY = pos.y;
 
